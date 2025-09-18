@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
+    "build:ui": "rm -rf dist && cd ../phonebook_frontend/PB_frontend && npm run build && cp -r dist ../../phonebook_app",
+    "deploy:full": "npm run build:ui && git add . && git commit -m UIbuild && git push origin main",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
