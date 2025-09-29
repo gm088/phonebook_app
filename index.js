@@ -9,6 +9,8 @@ morgan.token('reqBody', function (req, res) { return JSON.stringify(req.body) })
 app.use(morgan(':method :url :status :reqBody :response-time ms'))
 app.use(express.static('dist'))
 
+const Number = require('./models/number')
+
 const infoResponse = () => {
     
     const dat = new Date().toString()
