@@ -10,7 +10,7 @@ const password = process.argv[2]
 const url = `mongodb+srv://gm088:${password}@cluster0.ohbxqp1.mongodb.net/phonebookApp?retryWrites=true&w=majority&appName=Cluster0`
 
 mongoose.set('strictQuery', false)
-mongoose.connect(url)
+mongoose.connect(url).catch(error => console.log("error connecting to MongoDB"))
 
 //delare Schema
 const numberSchema = new mongoose.Schema({
