@@ -1,10 +1,10 @@
+require('dotenv').config()
 const express = require('express')
 var morgan = require('morgan')
 //const cors = require('cors')
-
+//app.use(cors())
 const app = express()
 app.use(express.json())
-//app.use(cors())
 morgan.token('reqBody', function (req, res) { return JSON.stringify(req.body) })
 app.use(morgan(':method :url :status :reqBody :response-time ms'))
 app.use(express.static('dist'))
@@ -64,15 +64,28 @@ app.get('/info', (req, res) => {
 })
 
 //define response to get request to persons
+//app.get('/api/persons', (req, res) => {
+//    res.json(persons) // express stringifies it
+//})
+
 app.get('/api/persons', (req, res) => {
-    res.json(persons) // express stringifies it
+    
+    //use MongoDB model + query
+    Number.find({}).then(nums => {
+        res.json(nums)
+    })
 })
 
 app.get('/api/persons/:id', (req, res) => {
     
-    const identifier = req.params.id
-    personOI = persons.find(p => p.id === identifier)
-    personOI ? res.json(personOI) : res.status(400).json({ error : "person not found" })
+    //const identifier = req.params.id
+    //personOI = persons.find(p => p.id === identifier)
+    //personOI ? res.json(personOI) : res.status(400).json({ error : "person not found" })
+
+    //Mongo
+    Number.findById(req.params.id).then(num => {
+        res.json(num)
+    }).catch(error => console.log(error.message))
 
 })
 
@@ -89,14 +102,23 @@ app.post('/api/persons', (req, res) => {
         return res.status(400).json({error: "person exists"})
     }
 
-    const newPerson = {
+    //const newPerson = {
+    //    name: body.name,
+    //    number: body.number,
+    //    id: generateID()
+    //}
+
+    //persons = persons.concat(newPerson)
+    //res.json(newPerson)
+
+    const number = new Number({
         name: body.name,
         number: body.number,
-        id: generateID()
-    }
+    })
 
-    persons = persons.concat(newPerson)
-    res.json(newPerson)
+    number.save().then(savednum => {
+        res.json(savednum)
+    })
 
 })
 
@@ -111,7 +133,7 @@ app.delete('/api/persons/:id', (req, res) => {
 
 app.use(unknownEndpoint)
 
-PORT = process.env.PORT || 3002
+PORT = process.env.PORT
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)
 })

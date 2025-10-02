@@ -1,11 +1,9 @@
 
 const mongoose = require('mongoose')
-
-const password = process.argv[2]
 const url = process.env.MONGODB_URI
 
 mongoose.set('strictQuery', false)
-console.log(`connecting to ${url}`)
+console.log(`connecting to MongoDB`)
 
 mongoose.connect(url)
     .then(result => console.log("connected to MongoDB"))
