@@ -4,10 +4,12 @@ var morgan = require('morgan')
 //const cors = require('cors')
 //app.use(cors())
 const app = express()
+
+app.use(express.static('dist'))
 app.use(express.json())
+
 morgan.token('reqBody', function (req, res) { return JSON.stringify(req.body) })
 app.use(morgan(':method :url :status :reqBody :response-time ms'))
-app.use(express.static('dist'))
 
 const Number = require('./models/number')
 
@@ -17,11 +19,6 @@ const infoResponse = () => {
     const s1 = `Phonebook has info for ${persons.length} people`
     const resString = `<p>${s1}</p><p>${dat}</p>`
     return(resString)
-}
-
-//a middleware for requests to non-existent routes
-const unknownEndpoint = (request, response) => {
-    response.status(404).send({ error: 'unknown endpoint' })
 }
 
 let persons = [
@@ -76,17 +73,23 @@ app.get('/api/persons', (req, res) => {
     })
 })
 
-app.get('/api/persons/:id', (req, res) => {
+app.get('/api/persons/:id', (req, res, next) => {
     
-    //const identifier = req.params.id
-    //personOI = persons.find(p => p.id === identifier)
-    //personOI ? res.json(personOI) : res.status(400).json({ error : "person not found" })
-
     //Mongo
-    Number.findById(req.params.id).then(num => {
-        res.json(num)
-    }).catch(error => console.log(error.message))
+    Number.findById(req.params.id)
+    .then(num => {
+        if(num){   //if it doesn't exist returns null
+            res.json(num)
+        }else{
+            res.status(404).end()
+        }
+    })
+    .catch(error => next(error))
+    //if next called without arg, execution moves to next route/middleware
+    //if next called with arg, then goes to express error handler
+    // error-handling functions have four arguments instead of three: (err, req, res, next)
 
+    //if this code were synchronous, we would not need to explicity pass to express
 })
 
 //post
@@ -102,15 +105,6 @@ app.post('/api/persons', (req, res) => {
         return res.status(400).json({error: "person exists"})
     }
 
-    //const newPerson = {
-    //    name: body.name,
-    //    number: body.number,
-    //    id: generateID()
-    //}
-
-    //persons = persons.concat(newPerson)
-    //res.json(newPerson)
-
     const number = new Number({
         name: body.name,
         number: body.number,
@@ -122,16 +116,56 @@ app.post('/api/persons', (req, res) => {
 
 })
 
-app.delete('/api/persons/:id', (req, res) => {
+//put request - updating a number
+app.put('/api/persons/:id', (req, res, next) => {
 
-    const identifier = req.params.id
-    persons = persons.filter(p => p.id !== identifier)
+    //const { name, num } = req.body
 
-    res.status(204).end()
+    Number.findById(req.params.id)
+    .then(number => {
+        if(!number){
+            res.status(404).end
+        }
+    
+        number.name = req.body.name
+        number.number = req.body.number
 
+        number.save()
+        .then(updatedNum => res.json(updatedNum))
+    })
+    .catch(err => next(err))
 })
 
+app.delete('/api/persons/:id', (req, res, next) => {
+
+    Number.findByIdAndDelete(req.params.id)
+    .then(result => {
+        res.status(204).end()
+    })
+    .catch(err => next(err))
+})
+
+//a middleware for requests to non-existent routes
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+}
+
 app.use(unknownEndpoint)
+
+const errorHandler = (err, req, res, next) => {
+
+    console.error(err.message)
+
+    //here, we only handle the malformatted ID case
+    if(err.name === 'CastError'){
+        return response.status(400).send({error: 'malformatted ID'})
+    }
+
+    //pass to express error handler
+    next(err)
+}
+
+app.use(errorHandler)
 
 PORT = process.env.PORT
 app.listen(PORT, () => {
