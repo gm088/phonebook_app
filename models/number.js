@@ -11,8 +11,16 @@ mongoose.connect(url)
 
 //delare Schema
 const numberSchema = new mongoose.Schema({
-    name: String,
-    number: String,
+    name: {
+        type: String,
+        minLength: 3,    //validation
+        required: true
+    },
+    number: {
+        type: String,
+        minLength: 3,
+        required: true
+    }
 })
 
 const Number = mongoose.model('Number', numberSchema)

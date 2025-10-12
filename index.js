@@ -84,7 +84,9 @@ app.get('/api/persons/:id', (req, res, next) => {
             res.status(404).end()
         }
     })
-    .catch(error => next(error))
+    .catch(error => {
+        next(error)
+    })
     //if next called without arg, execution moves to next route/middleware
     //if next called with arg, then goes to express error handler
     // error-handling functions have four arguments instead of three: (err, req, res, next)
@@ -93,7 +95,7 @@ app.get('/api/persons/:id', (req, res, next) => {
 })
 
 //post
-app.post('/api/persons', (req, res) => {
+app.post('/api/persons', (req, res, next) => {
 
     //parse body
     const body = req.body
@@ -110,8 +112,12 @@ app.post('/api/persons', (req, res) => {
         number: body.number,
     })
 
-    number.save().then(savednum => {
+    number.save()
+    .then(savednum => {
         res.json(savednum)
+    })
+    .catch(err => {
+        next(err)
     })
 
 })
@@ -152,16 +158,18 @@ const unknownEndpoint = (request, response) => {
 
 app.use(unknownEndpoint)
 
+// here, putting four arguments err, req, res and next, defines this as an error handler
 const errorHandler = (err, req, res, next) => {
 
     console.error(err.message)
 
-    //here, we only handle the malformatted ID case
     if(err.name === 'CastError'){
-        return response.status(400).send({error: 'malformatted ID'})
+        return res.status(400).send({error: 'malformatted ID'})
+    }else if(err.name === 'ValidationError'){
+        return res.status(400).json({error: err.message})
     }
 
-    //pass to express error handler
+    //unhandled case: pass to express error handler
     next(err)
 }
 
